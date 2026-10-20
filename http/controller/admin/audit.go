@@ -8,6 +8,8 @@ import (
 	"github.com/lejianwen/rustdesk-api/v2/model"
 	"github.com/lejianwen/rustdesk-api/v2/service"
 	"gorm.io/gorm"
+	"sort"
+	"time"
 )
 
 type Audit struct {
@@ -40,9 +42,74 @@ func (a *Audit) ConnList(c *gin.Context) {
 		if query.FromPeer != "" {
 			tx.Where("from_peer like ?", "%"+query.FromPeer+"%")
 		}
+		connFilters(tx, query)
 		tx.Order("id desc")
 	})
 	response.Success(c, res)
+}
+
+// SKY: a day "YYYY-MM-DD" in the server's time zone.
+func parseDay(s string) (time.Time, bool) {
+	if s == "" {
+		return time.Time{}, false
+	}
+	t, err := time.ParseInLocation("2006-01-02", s, time.Local)
+	return t, err == nil
+}
+
+// SKY: the technician (from_name) and the date range (both days inclusive).
+func connFilters(tx *gorm.DB, query *admin.AuditQuery) {
+	if query.FromName != "" {
+		tx.Where("from_name like ?", "%"+query.FromName+"%")
+	}
+	if t, ok := parseDay(query.From); ok {
+		tx.Where("created_at >= ?", t)
+	}
+	if t, ok := parseDay(query.To); ok {
+		tx.Where("created_at < ?", t.AddDate(0, 0, 1))
+	}
+}
+
+// ConnSummary SKY: per technician (from_name) in a date range: the number of sessions and their total time
+// (close_time - created_at of the connections that were authorized and have closed; the time includes the
+// wait for the customer's accept). Connections without a close are counted as open.
+func (a *Audit) ConnSummary(c *gin.Context) {
+	query := &admin.AuditQuery{}
+	if err := c.ShouldBindQuery(query); err != nil {
+		response.Fail(c, 101, response.TranslateMsg(c, "ParamsError")+err.Error())
+		return
+	}
+	rows := make([]*model.AuditConn, 0)
+	tx := global.DB.Model(&model.AuditConn{}).Where("from_peer <> ''")
+	connFilters(tx, query)
+	tx.Find(&rows)
+	type item struct {
+		FromName string `json:"from_name"`
+		Sessions int    `json:"sessions"`
+		Seconds  int64  `json:"seconds"`
+		Open     int    `json:"open"`
+	}
+	by := map[string]*item{}
+	for _, r := range rows {
+		it := by[r.FromName]
+		if it == nil {
+			it = &item{FromName: r.FromName}
+			by[r.FromName] = it
+		}
+		it.Sessions++
+		start := time.Time(r.CreatedAt).Unix()
+		if r.CloseTime == 0 {
+			it.Open++
+		} else if r.CloseTime >= start {
+			it.Seconds += r.CloseTime - start
+		}
+	}
+	list := make([]*item, 0, len(by))
+	for _, it := range by {
+		list = append(list, it)
+	}
+	sort.Slice(list, func(i, j int) bool { return list[i].Seconds > list[j].Seconds })
+	response.Success(c, gin.H{"list": list})
 }
 
 // ConnDelete 删除

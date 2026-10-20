@@ -10,5 +10,9 @@ the `sky` branch:
   the session id is kept exactly (a u64; as float64 it lost digits).
 - Notes: on address-book entries (the client's "Edit note") and on connection logs: the end-of-session note
   of the controlling client (`GET /api/audit/conn/active`, `PUT /api/audit`), with the user who wrote it.
-  Database version 266 adds the columns.
+  Database version 266 adds the columns. A note is accepted only from the device that controlled the
+  connection (the device id of the caller's access token = the row's from_peer), while it is open or up to an
+  hour after, and never over another user's note.
+- Admin: the connection log can be filtered by technician (`from_name`) and dates (`from`, `to`);
+  `GET /api/admin/audit_conn/summary` gives sessions and total time per technician.
 - Build: `.github/workflows/sky-build.yml` (x86_64 Linux, static musl).
