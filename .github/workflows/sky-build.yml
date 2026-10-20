@@ -1,4 +1,4 @@
-# SKY: builds rustdesk-api (with our changes) for the SKY Support server: x86_64 Linux, static musl like
+# SKY: builds rustdesk-api (with our changes) for the SKY Support server: x86_64 Linux, static musl like (SKY)
 # upstream build.yml. The admin web UI is built and deployed separately (skycobg/rustdesk-api-web).
 name: SKY rustdesk-api build
 
