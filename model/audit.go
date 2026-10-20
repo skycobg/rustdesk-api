@@ -17,6 +17,9 @@ type AuditConn struct {
 	Type      int    `json:"type" gorm:"default:0;not null;"`
 	Uuid      string `json:"uuid" gorm:"default:'';not null;"`
 	CloseTime int64  `json:"close_time" gorm:"default:0;not null;"`
+	// SKY: the technician's note at the end of the session and who wrote it (client PUT /api/audit)
+	Note   string `json:"note" gorm:"default:'';not null;"`
+	NoteBy string `json:"note_by" gorm:"default:'';not null;"`
 	TimeModel
 }
 

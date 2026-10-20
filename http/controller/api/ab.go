@@ -707,7 +707,7 @@ func (a *Ab) PeerUpdate(c *gin.Context) {
 		return
 	}
 	//允许的字段
-	allowUp := []string{"password", "hash", "tags", "alias"}
+	allowUp := []string{"password", "hash", "tags", "alias", "note"} // SKY: note (the client's "Edit note")
 	//f中的字段如果不在allowUp中，就删除
 	for k := range f {
 		if !utils.InArray(k, allowUp) {

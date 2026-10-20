@@ -75,6 +75,12 @@ func ApiInit(g *gin.Engine) {
 
 	frg.Use(middleware.RustAuth())
 	{
+		// SKY: the end-of-session note from the controlling client (logged in)
+		au := &api.Audit{}
+		frg.GET("/audit/conn/active", au.ConnActive)
+		frg.PUT("/audit", au.UpdateNote)
+	}
+	{
 		u := &api.User{}
 		frg.GET("/user/info", u.Info)
 		frg.POST("/currentUser", u.Info)

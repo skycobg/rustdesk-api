@@ -50,6 +50,7 @@ func (pabf *PersonalAddressBookForm) ToAddressBook() *model.AddressBook {
 		Password:         pabf.Password,
 		Hostname:         pabf.Hostname,
 		Alias:            pabf.Alias,
+		Note:             pabf.Note,
 		Platform:         pabf.Platform,
 		Tags:             pabf.Tags,
 		Hash:             pabf.Hash,

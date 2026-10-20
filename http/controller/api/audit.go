@@ -7,6 +7,8 @@ import (
 	"github.com/lejianwen/rustdesk-api/v2/http/response"
 	"github.com/lejianwen/rustdesk-api/v2/model"
 	"github.com/lejianwen/rustdesk-api/v2/service"
+	"net/http"
+	"strconv"
 	"time"
 )
 
@@ -55,7 +57,8 @@ func (a *Audit) AuditConn(c *gin.Context) {
 			service.AllService.AuditService.UpdateAuditConn(up)
 		}
 	}
-	response.Success(c, "")
+	// SKY: the client takes only an empty body as stored and posted every record three times otherwise.
+	c.Status(http.StatusOK)
 }
 
 // AuditFile
@@ -80,5 +83,54 @@ func (a *Audit) AuditFile(c *gin.Context) {
 	//fmt.Println(ttt)
 	af := aff.ToAuditFile()
 	service.AllService.AuditService.CreateAuditFile(af)
-	response.Success(c, "")
+	// SKY: the client takes only an empty body as stored and posted every record three times otherwise.
+	c.Status(http.StatusOK)
+}
+
+// ConnActive
+// SKY: the controlling client asks for the log row of its connection, to attach a note at the end:
+// GET /api/audit/conn/active?id=<controlled id>&session_id=<its session id>&conn_type=<type>. The answer is a
+// JSON string: the row id, or "" while the controlled side has not reported the connection yet (the client
+// retries for a few seconds).
+func (a *Audit) ConnActive(c *gin.Context) {
+	peerId := c.Query("id")
+	sessionId := c.Query("session_id")
+	connType, _ := strconv.Atoi(c.Query("conn_type"))
+	if peerId == "" || sessionId == "" || sessionId == "0" {
+		c.JSON(http.StatusOK, "")
+		return
+	}
+	ex := service.AllService.AuditService.ActiveBySession(peerId, sessionId, connType)
+	if ex.Id == 0 {
+		c.JSON(http.StatusOK, "")
+		return
+	}
+	c.JSON(http.StatusOK, strconv.FormatUint(uint64(ex.Id), 10))
+}
+
+// UpdateNote
+// SKY: PUT /api/audit {"guid": "<row id from ConnActive>", "note": "..."}: the technician's note at the end
+// of the session, kept with the connection log together with the user who wrote it.
+func (a *Audit) UpdateNote(c *gin.Context) {
+	f := &request.AuditNoteForm{}
+	if err := c.ShouldBindJSON(f); err != nil {
+		response.Error(c, response.TranslateMsg(c, "ParamsError")+err.Error())
+		return
+	}
+	id, err := strconv.ParseUint(f.Guid, 10, 64)
+	if err != nil || id == 0 {
+		response.Error(c, response.TranslateMsg(c, "ParamsError"))
+		return
+	}
+	ex := service.AllService.AuditService.ConnInfoById(uint(id))
+	if ex.Id == 0 {
+		response.Error(c, response.TranslateMsg(c, "ItemNotFound"))
+		return
+	}
+	by := ""
+	if u := service.AllService.UserService.CurUser(c); u != nil {
+		by = u.Username
+	}
+	service.AllService.AuditService.UpdateAuditConn(&model.AuditConn{IdModel: model.IdModel{Id: ex.Id}, Note: f.Note, NoteBy: by})
+	c.Status(http.StatusOK)
 }

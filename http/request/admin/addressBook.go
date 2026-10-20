@@ -12,6 +12,7 @@ type AddressBookForm struct {
 	Password         string   `json:"password" `
 	Hostname         string   `json:"hostname" `
 	Alias            string   `json:"alias" `
+	Note             string   `json:"note"` // SKY
 	Platform         string   `json:"platform" `
 	Tags             []string `json:"tags"`
 	Hash             string   `json:"hash"`
@@ -37,6 +38,7 @@ func (a AddressBookForm) ToAddressBook() *model.AddressBook {
 		Password:         a.Password,
 		Hostname:         a.Hostname,
 		Alias:            a.Alias,
+		Note:             a.Note,
 		Platform:         a.Platform,
 		Tags:             tags,
 		Hash:             a.Hash,
@@ -64,6 +66,7 @@ func (a AddressBookForm) ToAddressBooks() []*model.AddressBook {
 			Password:         a.Password,
 			Hostname:         a.Hostname,
 			Alias:            a.Alias,
+			Note:             a.Note,
 			Platform:         a.Platform,
 			Tags:             tags,
 			Hash:             a.Hash,

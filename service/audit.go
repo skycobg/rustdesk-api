@@ -37,9 +37,23 @@ func (as *AuditService) UpdateAuditConn(u *model.AuditConn) error {
 }
 
 // InfoByPeerIdAndConnId
+// SKY: the newest row of this connection that is still open. conn_id restarts at 1-1999 with every start of
+// the client, so the oldest match (upstream) could be a row of an earlier connection.
 func (as *AuditService) InfoByPeerIdAndConnId(peerId string, connId int64) (res *model.AuditConn) {
 	res = &model.AuditConn{}
-	DB.Where("peer_id = ? and conn_id = ?", peerId, connId).First(res)
+	DB.Where("peer_id = ? and conn_id = ? and close_time = 0", peerId, connId).Order("id desc").First(res)
+	return
+}
+
+// ActiveBySession SKY: the open connection to `peerId` from the controlling session `sessionId`
+// (GET /api/audit/conn/active); the type is matched when it can be.
+func (as *AuditService) ActiveBySession(peerId, sessionId string, connType int) (res *model.AuditConn) {
+	res = &model.AuditConn{}
+	DB.Where("peer_id = ? and session_id = ? and type = ? and close_time = 0", peerId, sessionId, connType).Order("id desc").First(res)
+	if res.Id == 0 {
+		res = &model.AuditConn{}
+		DB.Where("peer_id = ? and session_id = ? and close_time = 0", peerId, sessionId).Order("id desc").First(res)
+	}
 	return
 }
 

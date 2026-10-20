@@ -1,0 +1,41 @@
+# SKY: builds rustdesk-api (with our changes) for the SKY Support server: x86_64 Linux, static musl like
+# upstream build.yml. The admin web UI is built and deployed separately (skycobg/rustdesk-api-web).
+name: SKY rustdesk-api build
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - "sky-*"
+
+jobs:
+  linux-amd64:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.23'
+
+      - name: swag (as upstream)
+        run: |
+          go install github.com/swaggo/swag/cmd/swag@latest
+          swag init -g cmd/apimain.go --output docs/api --instanceName api --exclude http/controller/admin
+          swag init -g cmd/apimain.go --output docs/admin --instanceName admin --exclude http/controller/api
+
+      - name: Build
+        run: |
+          sudo apt-get install -y musl musl-dev musl-tools
+          go mod tidy
+          GOOS=linux GOARCH=amd64 CC=musl-gcc CGO_LDFLAGS="-static" CGO_ENABLED=1 go build -ldflags "-s -w" -o ./release/rustdesk-api ./cmd/apimain.go
+          file ./release/rustdesk-api
+          sha256sum ./release/rustdesk-api
+
+      - name: Upload
+        uses: actions/upload-artifact@v4
+        with:
+          name: rustdesk-api-linux-amd64
+          path: ./release/rustdesk-api

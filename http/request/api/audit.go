@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"github.com/lejianwen/rustdesk-api/v2/global"
 	"github.com/lejianwen/rustdesk-api/v2/model"
-	"strconv"
 )
 
 type AuditConnForm struct {
@@ -13,7 +12,7 @@ type AuditConnForm struct {
 	Id        string   `json:"id"`
 	Peer      []string `json:"peer"`
 	Ip        string   `json:"ip"`
-	SessionId float64  `json:"session_id"`
+	SessionId json.Number `json:"session_id"` // SKY: a u64; as float64 it lost digits and could not be matched
 	Type      int      `json:"type"`
 	Uuid      string   `json:"uuid"`
 }
@@ -27,7 +26,10 @@ func (a *AuditConnForm) ToAuditConn() *model.AuditConn {
 			fn = a.Peer[1]
 		}
 	}
-	ssid := strconv.FormatFloat(a.SessionId, 'f', -1, 64)
+	ssid := a.SessionId.String()
+	if ssid == "" {
+		ssid = "0"
+	}
 	return &model.AuditConn{
 		Action:    a.Action,
 		ConnId:    a.ConnId,
@@ -75,4 +77,10 @@ func (a *AuditFileForm) ToAuditFile() *model.AuditFile {
 		Ip:       fi.Ip,
 		Num:      fi.Num,
 	}
+}
+
+// AuditNoteForm SKY: PUT /api/audit from the controlling client at the end of a session.
+type AuditNoteForm struct {
+	Guid string `json:"guid"`
+	Note string `json:"note"`
 }
