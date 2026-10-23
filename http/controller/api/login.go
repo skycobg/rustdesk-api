@@ -58,6 +58,11 @@ func (l *Login) Login(c *gin.Context) {
 
 	if u.Id == 0 {
 		loginLimiter.RecordFailedAttempt(clientIp)
+		where := "програмата" // SKY: the login alert
+		if c.GetHeader("referer") != "" {
+			where = "уеб клиента"
+		}
+		SkyLoginFailed(c, f.Username, where, skyDevice(f))
 		global.Logger.Warn(fmt.Sprintf("Login Fail: %s %s %s", "UsernameOrPasswordError", c.RemoteIP(), c.ClientIP()))
 		response.Error(c, response.TranslateMsg(c, "UsernameOrPasswordError"))
 		return

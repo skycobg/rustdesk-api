@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/go-redis/redis/v8"
@@ -210,7 +211,40 @@ func InitGlobal() {
 		BanDuration:      30 * time.Minute,
 	})
 	global.LoginLimiter.RegisterProvider(utils.B64StringCaptchaProvider{})
+	initLoginAlert()
 	DatabaseAutoUpdate()
+}
+
+// initLoginAlert SKY: an email after a few wrong passwords, in place of a ban by IP (the office goes out
+// through one IP). Off unless app.login-alert-threshold, app.login-alert-to and mail.host are all set.
+func initLoginAlert() {
+	a, m := global.Config.App, global.Config.Mail
+	var to []string
+	for _, t := range strings.Split(a.LoginAlertTo, ",") {
+		if t = strings.TrimSpace(t); t != "" {
+			to = append(to, t)
+		}
+	}
+	if a.LoginAlertThreshold <= 0 || len(to) == 0 || m.Host == "" {
+		return
+	}
+	window := a.LoginAlertWindow
+	if window <= 0 {
+		window = 24 * time.Hour
+	}
+	server := utils.MailServer{Host: m.Host, Port: m.Port, User: m.User, Password: m.Password, From: m.From}
+	if server.Port == 0 {
+		server.Port = 587
+	}
+	global.LoginAlert = utils.NewLoginAlert(a.LoginAlertThreshold, window, time.Hour, global.Config.Rustdesk.ApiServer,
+		func(subject, body string) {
+			if err := utils.SendMail(server, to, subject, body); err != nil {
+				global.Logger.Error("SKY login alert: the email failed: ", err, " (", subject, ")")
+				return
+			}
+			global.Logger.Info("SKY login alert: sent ", subject)
+		})
+	global.Logger.Info(fmt.Sprintf("SKY login alert: on, %d wrong passwords within %s, to %s", a.LoginAlertThreshold, window, strings.Join(to, ", ")))
 }
 
 func DatabaseAutoUpdate() {

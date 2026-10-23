@@ -26,6 +26,9 @@ jobs:
           swag init -g cmd/apimain.go --output docs/api --instanceName api --exclude http/controller/admin
           swag init -g cmd/apimain.go --output docs/admin --instanceName admin --exclude http/controller/api
 
+      - name: Test the login alert (SKY) and the login limiter
+        run: go test -count=1 ./utils/
+
       - name: Build
         run: |
           sudo apt-get install -y musl musl-dev musl-tools

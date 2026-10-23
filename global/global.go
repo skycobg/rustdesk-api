@@ -37,4 +37,5 @@ var (
 	Lock         lock.Locker
 	Localizer    func(lang string) *i18n.Localizer
 	LoginLimiter *utils.LoginLimiter
+	LoginAlert   *utils.LoginAlert // SKY: nil when off
 )

@@ -15,4 +15,9 @@ the `sky` branch:
   hour after, and never over another user's note.
 - Admin: the connection log can be filtered by technician (`from_name`) and dates (`from`, `to`);
   `GET /api/admin/audit_conn/summary` gives sessions and total time per technician.
+- Login alert, in place of a ban by IP (the office goes out through one IP): an email to `app.login-alert-to`
+  after `app.login-alert-threshold` wrong passwords within `app.login-alert-window` (all users and IPs together,
+  in the program and in the web panel), over the SMTP server in `mail` (STARTTLS on 587 or TLS on 465). It lists
+  them (time, user and whether it exists, IP, program or panel, device); the next email comes an hour later at
+  the earliest and lists everything that came meanwhile. Off unless set (`utils/sky_login_alert.go`).
 - Build: `.github/workflows/sky-build.yml` (x86_64 Linux, static musl).

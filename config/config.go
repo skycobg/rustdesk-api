@@ -23,6 +23,12 @@ type App struct {
 	DisablePwdLogin  bool          `mapstructure:"disable-pwd-login"`
 	CaptchaThreshold int           `mapstructure:"captcha-threshold"`
 	BanThreshold     int           `mapstructure:"ban-threshold"`
+
+	// SKY: an email to login-alert-to (comma-separated) after login-alert-threshold wrong passwords within
+	// login-alert-window (0: off), over the SMTP server in mail
+	LoginAlertThreshold int           `mapstructure:"login-alert-threshold"`
+	LoginAlertWindow    time.Duration `mapstructure:"login-alert-window"`
+	LoginAlertTo        string        `mapstructure:"login-alert-to"`
 }
 type Admin struct {
 	Title           string `mapstructure:"title"`
@@ -47,6 +53,7 @@ type Config struct {
 	Rustdesk   Rustdesk
 	Proxy      Proxy
 	Ldap       Ldap
+	Mail       Mail // SKY
 }
 
 func (a *Admin) Init() {

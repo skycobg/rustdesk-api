@@ -2,6 +2,7 @@ package admin
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/lejianwen/rustdesk-api/v2/global"
@@ -69,6 +70,7 @@ func (ct *Login) Login(c *gin.Context) {
 	if u.Id == 0 {
 		global.Logger.Warn(fmt.Sprintf("Login Fail: %s %s %s", "UsernameOrPasswordError", c.RemoteIP(), clientIp))
 		loginLimiter.RecordFailedAttempt(clientIp)
+		api.SkyLoginFailed(c, f.Username, "уеб панела", strings.TrimSpace(f.Platform+" "+c.Request.UserAgent())) // SKY
 		if _, needCaptcha = loginLimiter.CheckSecurityStatus(clientIp); needCaptcha {
 			response.Fail(c, 110, response.TranslateMsg(c, "UsernameOrPasswordError"))
 		} else {
