@@ -18,7 +18,11 @@ func SkyLoginFailed(c *gin.Context, username, where, device string) {
 		return
 	}
 	known := service.AllService.UserService.InfoByUsername(username).Id > 0
-	global.LoginAlert.Failed(utils.FailedLogin{At: time.Now(), Username: username, Known: known, Ip: c.ClientIP(),
+	ip := c.ClientIP()
+	if global.Config.Gin.TrustProxy == "" {
+		ip = c.RemoteIP() // with no trusted proxy set, gin believes any X-Forwarded-For: the socket's address then
+	}
+	global.LoginAlert.Failed(utils.FailedLogin{At: time.Now(), Username: username, Known: known, Ip: ip,
 		Where: where, Device: device})
 }
 

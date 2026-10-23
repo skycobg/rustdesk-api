@@ -132,6 +132,26 @@ func TestSkyShow(t *testing.T) {
 	if got := show("  ", 32); got != "(празно)" {
 		t.Fatalf("%q", got)
 	}
+	if got := typed("adm\u202Eni", 32); got != "adm?ni" {
+		t.Fatalf("%q", got)
+	}
+	if got := typed("Reset at https://evil.example/x", 64); got != "Reset at https[:]//evil[.]example/x" {
+		t.Fatalf("%q", got)
+	}
+}
+
+func TestSkyLoginAlertDefangs(t *testing.T) {
+	a, ch := newTestAlert(24*time.Hour, time.Hour)
+	for i := 0; i < 5; i++ {
+		f := wrong("www.evil.example", time.Now())
+		f.Device = "see http://evil.example/login"
+		a.Failed(f)
+	}
+	m := expectMail(t, ch)
+	if strings.Contains(m.subject+m.body, "evil.example") || strings.Contains(m.body, "http://") ||
+		!strings.Contains(m.subject, "www[.]evil[.]example") || !strings.Contains(m.body, "(see http[:]//evil[.]example/login)") {
+		t.Fatal(m.subject, m.body)
+	}
 }
 
 func TestSkyMailMessage(t *testing.T) {

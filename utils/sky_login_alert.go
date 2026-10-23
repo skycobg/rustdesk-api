@@ -96,12 +96,12 @@ func (a *LoginAlert) mail(followUp bool, now time.Time) {
 
 func (a *LoginAlert) message(followUp bool) (subject, body string) {
 	total := len(a.pending) + a.dropped
-	users := tally(a.pending, func(f FailedLogin) string { return show(f.Username, 32) })
+	users := tally(a.pending, func(f FailedLogin) string { return typed(f.Username, 32) })
 	ips := tally(a.pending, func(f FailedLogin) string { return show(f.Ip, 45) })
 	unknown := map[string]bool{}
 	for _, f := range a.pending {
 		if !f.Known {
-			unknown[show(f.Username, 32)] = true
+			unknown[typed(f.Username, 32)] = true
 		}
 	}
 
@@ -145,9 +145,9 @@ func (a *LoginAlert) message(followUp bool) (subject, body string) {
 
 	shown := a.pending[max(0, len(a.pending)-loginAlertList):]
 	for _, f := range shown {
-		line := f.At.Format("02.01.2006 15:04:05") + "  " + show(f.Username, 32) + "  " + show(f.Ip, 45) + "  " + show(f.Where, 20)
+		line := f.At.Format("02.01.2006 15:04:05") + "  " + typed(f.Username, 32) + "  " + show(f.Ip, 45) + "  " + show(f.Where, 20)
 		if f.Device != "" {
-			line += " (" + show(f.Device, 160) + ")"
+			line += " (" + typed(f.Device, 160) + ")"
 		}
 		b.WriteString(line + "\n")
 	}
@@ -201,7 +201,7 @@ func counts(list []tallied, unknown map[string]bool) string {
 	return strings.Join(parts, ", ")
 }
 
-// show keeps what a user or a bot sent printable and short: it goes into the email and its subject.
+// show keeps a value printable and short: no control characters and none that turn the text around (U+202E).
 func show(s string, limit int) string {
 	r := []rune(strings.TrimSpace(s))
 	if len(r) == 0 {
@@ -211,12 +211,20 @@ func show(s string, limit int) string {
 		r = append(r[:limit:limit], '…')
 	}
 	for i, c := range r {
-		if unicode.IsControl(c) {
+		if unicode.IsControl(c) || unicode.Is(unicode.Cf, c) {
 			r[i] = '?'
 		}
 	}
 	return string(r)
 }
+
+// typed is what a user or a bot typed (a username, what a device says about itself), shown as alerts show
+// addresses: nothing a mail reader would turn into a link ("://" as "[:]//", every dot as "[.]").
+func typed(s string, limit int) string {
+	return defang.Replace(show(s, limit))
+}
+
+var defang = strings.NewReplacer("://", "[:]//", ".", "[.]")
 
 func durText(d time.Duration) string {
 	switch {

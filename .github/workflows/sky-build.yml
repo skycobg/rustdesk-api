@@ -27,7 +27,7 @@ jobs:
           swag init -g cmd/apimain.go --output docs/admin --instanceName admin --exclude http/controller/api
 
       - name: Test the login alert (SKY) and the login limiter
-        run: go test -count=1 ./utils/
+        run: go mod tidy && go test -count=1 ./utils/
 
       - name: Build
         run: |
