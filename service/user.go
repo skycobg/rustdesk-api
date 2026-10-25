@@ -26,7 +26,7 @@ func (us *UserService) InfoById(id uint) *model.User {
 // InfoByUsername 根据用户名取用户信息
 func (us *UserService) InfoByUsername(un string) *model.User {
 	u := &model.User{}
-	DB.Where("username = ?", us.formatUsername(un)).First(u) // SKY: as stored (lower case, no spaces)
+	DB.Where("username = ?", un).First(u)
 	return u
 }
 
@@ -55,8 +55,11 @@ func (us *UserService) InfoByUsernamePassword(username, password string) *model.
 		Logger.Warn("Fallback to local database")
 	}
 	u := &model.User{}
-	// SKY: usernames are stored lower case and without spaces (formatUsername), so "Niki" logs in as niki
-	DB.Where("username = ?", us.formatUsername(username)).First(u)
+	DB.Where("username = ?", username).First(u)
+	if u.Id == 0 {
+		// SKY: usernames are stored lower case and without spaces (formatUsername), so "Niki" logs in as niki
+		DB.Where("username = ?", us.formatUsername(username)).First(u)
+	}
 	if u.Id == 0 {
 		return u
 	}
@@ -523,7 +526,10 @@ func (us *UserService) IsUsernameExists(username string) bool {
 
 func (us *UserService) IsUsernameExistsLocal(username string) bool {
 	u := &model.User{}
-	DB.Where("username = ?", us.formatUsername(username)).First(u) // SKY: Create checks before it formats
+	DB.Where("username = ?", username).First(u)
+	if u.Id == 0 { // SKY: Create formats the name after this check, so look for that one too
+		DB.Where("username = ?", us.formatUsername(username)).First(u)
+	}
 	return u.Id != 0
 }
 

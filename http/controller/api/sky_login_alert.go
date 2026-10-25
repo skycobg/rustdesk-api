@@ -17,7 +17,7 @@ func SkyLoginFailed(c *gin.Context, username, where, device string) {
 	if global.LoginAlert == nil {
 		return
 	}
-	known := service.AllService.UserService.InfoByUsername(username).Id > 0
+	known := service.AllService.UserService.IsUsernameExistsLocal(username) // as the login looks it up
 	ip := c.ClientIP()
 	if global.Config.Gin.TrustProxy == "" {
 		ip = c.RemoteIP() // with no trusted proxy set, gin believes any X-Forwarded-For: the socket's address then
