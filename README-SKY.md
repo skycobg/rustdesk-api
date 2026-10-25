@@ -20,4 +20,6 @@ the `sky` branch:
   in the program and in the web panel), over the SMTP server in `mail` (STARTTLS on 587 or TLS on 465). It lists
   them (time, user and whether it exists, IP, program or panel, device); the next email comes an hour later at
   the earliest and lists everything that came meanwhile. Off unless set (`utils/sky_login_alert.go`).
+- Logins ignore case and spaces in the username: usernames are stored lower case and without spaces
+  (`formatUsername`), so "Niki" logs in as niki; the check for an existing name does the same.
 - Build: `.github/workflows/sky-build.yml` (x86_64 Linux, static musl).
