@@ -42,6 +42,20 @@ func skyHelpError(c *gin.Context, code int, msg string) {
 	c.JSON(code, gin.H{"error": msg})
 }
 
+// skyHelpTechnician the logged-in user, if he may see and accept help requests (else the answer is sent).
+func skyHelpTechnician(c *gin.Context) *model.User {
+	u := service.AllService.UserService.CurUser(c)
+	group := global.Config.App.SkyHelpGroup
+	if group == "" {
+		group = "SKY"
+	}
+	if !service.AllService.SkyHelpService.Allowed(u, group) {
+		skyHelpError(c, http.StatusForbidden, "Този акаунт не приема заявки за помощ.")
+		return nil
+	}
+	return u
+}
+
 // Config GET /api/sky/help/config: the phones the customer calls and how long a request waits.
 func (h *SkyHelp) Config(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
@@ -168,6 +182,9 @@ type skyHelpItem struct {
 // Pending GET /api/sky/help/pending (logged in): the waiting requests and the recently accepted ones,
 // without passwords.
 func (h *SkyHelp) Pending(c *gin.Context) {
+	if skyHelpTechnician(c) == nil {
+		return
+	}
 	now := time.Now().Unix()
 	list := service.AllService.SkyHelpService.Board(now)
 	items := make([]skyHelpItem, 0, len(list))
@@ -193,9 +210,8 @@ func (h *SkyHelp) Accept(c *gin.Context) {
 		skyHelpError(c, http.StatusBadRequest, "Невалидна заявка.")
 		return
 	}
-	u := service.AllService.UserService.CurUser(c)
-	if u == nil || u.Id == 0 {
-		skyHelpError(c, http.StatusUnauthorized, "Влезте в акаунта си.")
+	u := skyHelpTechnician(c)
+	if u == nil {
 		return
 	}
 	r, code, msg := service.AllService.SkyHelpService.Accept(f.Id, u, time.Now().Unix())

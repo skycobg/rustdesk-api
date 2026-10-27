@@ -36,6 +36,8 @@ type App struct {
 	SkyHelpWait       time.Duration `mapstructure:"sky-help-wait"`
 	SkyHelpAlertAfter time.Duration `mapstructure:"sky-help-alert-after"`
 	SkyHelpAlertTo    string        `mapstructure:"sky-help-alert-to"`
+	// SKY: who sees and accepts help requests: admins and the members of this group (empty: "SKY")
+	SkyHelpGroup string `mapstructure:"sky-help-group"`
 }
 type Admin struct {
 	Title           string `mapstructure:"title"`

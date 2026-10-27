@@ -12,6 +12,7 @@ app:
   sky-help-wait: 10m # SKY: how long a help request waits for a technician
   sky-help-alert-after: 0 # SKY: an email when nobody has accepted a help request within this (e.g. 2m); 0: off
   sky-help-alert-to: "" # SKY: who gets it (comma-separated; empty: login-alert-to)
+  sky-help-group: "" # SKY: who sees and accepts help requests: admins and this group (empty: SKY)
   show-swagger: 0 # 1:启用 0:禁用
   token-expire: 168h
   web-sso: true #web auth sso

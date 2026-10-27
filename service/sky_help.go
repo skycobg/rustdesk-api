@@ -11,11 +11,31 @@ type SkyHelpService struct {
 
 var skyHelpOpen = []string{utils.SkyHelpPending, utils.SkyHelpAccepted}
 
-// Create stores a new request; a waiting request from the same ID is cancelled (the customer pressed again).
+// Create stores a new request. A waiting request of the same machine (the same ID and uuid) is cancelled: the
+// customer pressed again. Someone who only knows the ID cannot cancel the customer's request this way.
 func (s *SkyHelpService) Create(r *model.SkyHelpRequest) error {
-	DB.Model(&model.SkyHelpRequest{}).Where("peer_id = ? and status in ?", r.PeerId, skyHelpOpen).
-		Updates(map[string]any{"status": utils.SkyHelpCancelled, "password": ""})
+	if r.Uuid != "" {
+		DB.Model(&model.SkyHelpRequest{}).Where("peer_id = ? and uuid = ? and status in ?", r.PeerId, r.Uuid, skyHelpOpen).
+			Updates(map[string]any{"status": utils.SkyHelpCancelled, "password": ""})
+	}
 	return DB.Create(r).Error
+}
+
+// Allowed whether user u may see and accept help requests: an admin, or a member of the group named `group`
+// (app.sky-help-group, default "SKY"). Accounts are made by the admin, but a password must never reach anyone else.
+func (s *SkyHelpService) Allowed(u *model.User, group string) bool {
+	if u == nil || u.Id == 0 {
+		return false
+	}
+	if u.IsAdmin != nil && *u.IsAdmin {
+		return true
+	}
+	if group == "" || u.GroupId == 0 {
+		return false
+	}
+	g := &model.Group{}
+	DB.Where("id = ?", u.GroupId).First(g)
+	return g.Id != 0 && g.Name == group
 }
 
 // ByToken the request of the customer's SKY Support that holds `token` (empty Id when there is none).
