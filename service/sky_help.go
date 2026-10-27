@@ -53,8 +53,11 @@ func (s *SkyHelpService) ByToken(id uint, token string) *model.SkyHelpRequest {
 func (s *SkyHelpService) Seen(r *model.SkyHelpRequest, password string, connected bool, now int64) {
 	st := utils.SkyHelpEffective(r.Status, r.LastSeen, r.ExpiresAt, now)
 	up := map[string]any{}
+	// The one-time password changes as soon as it has let someone in: a new password after the request was
+	// accepted means the technician got in, even if the customer's SKY Support has not noticed it yet.
+	rotated := st == utils.SkyHelpAccepted && password != "" && r.Password != "" && password != r.Password
 	switch {
-	case st == utils.SkyHelpAccepted && connected:
+	case st == utils.SkyHelpAccepted && (connected || rotated):
 		st = utils.SkyHelpConnected
 		up["status"], up["password"] = st, ""
 	case st == utils.SkyHelpPending || st == utils.SkyHelpAccepted:

@@ -31,6 +31,8 @@ the `sky` branch:
   `POST /api/sky/help/accept` (the first technician gets the ID and the password, the others "taken by"); only admins and
   the group `app.sky-help-group` (default SKY) may use them. A new request cancels a waiting one only from the same
   machine (ID and uuid). The password
-  is wiped once the technician is in, when the request ends, and 10 minutes after it was accepted at the latest.
+  is wiped once the technician is in (the customer reports a new one-time password after the request was accepted:
+  RustDesk changes it as soon as it has let someone in), when the request ends, and 10 minutes after it was accepted
+  at the latest.
   Settings `app.sky-help-*`: the phones, the waiting time and an email when nobody accepts in time.
 - Build: `.github/workflows/sky-build.yml` (x86_64 Linux, static musl).
