@@ -29,6 +29,13 @@ type App struct {
 	LoginAlertThreshold int           `mapstructure:"login-alert-threshold"`
 	LoginAlertWindow    time.Duration `mapstructure:"login-alert-window"`
 	LoginAlertTo        string        `mapstructure:"login-alert-to"`
+	// SKY: help requests from SKY Support (/api/sky/help): the phones shown to the customer (comma-separated;
+	// empty: ours), how long a request waits (default 10m), an email to sky-help-alert-to (empty: login-alert-to)
+	// when nobody has accepted one within sky-help-alert-after (0: off)
+	SkyHelpPhones     string        `mapstructure:"sky-help-phones"`
+	SkyHelpWait       time.Duration `mapstructure:"sky-help-wait"`
+	SkyHelpAlertAfter time.Duration `mapstructure:"sky-help-alert-after"`
+	SkyHelpAlertTo    string        `mapstructure:"sky-help-alert-to"`
 }
 type Admin struct {
 	Title           string `mapstructure:"title"`

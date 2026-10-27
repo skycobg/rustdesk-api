@@ -11,6 +11,7 @@ import (
 	"github.com/lejianwen/rustdesk-api/v2/config"
 	"github.com/lejianwen/rustdesk-api/v2/global"
 	"github.com/lejianwen/rustdesk-api/v2/http"
+	skyapi "github.com/lejianwen/rustdesk-api/v2/http/controller/api"
 	"github.com/lejianwen/rustdesk-api/v2/lib/cache"
 	"github.com/lejianwen/rustdesk-api/v2/lib/jwt"
 	"github.com/lejianwen/rustdesk-api/v2/lib/lock"
@@ -24,7 +25,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const DatabaseVersion = 266 // SKY: notes on address-book entries and connection logs
+const DatabaseVersion = 267 // SKY: 266 notes on address-book entries and connection logs, 267 help requests
 
 // @title 管理系统API
 // @version 1.0
@@ -213,6 +214,34 @@ func InitGlobal() {
 	global.LoginLimiter.RegisterProvider(utils.B64StringCaptchaProvider{})
 	initLoginAlert()
 	DatabaseAutoUpdate()
+	initSkyHelpAlerts()
+}
+
+// initSkyHelpAlerts SKY: an email when nobody has accepted a help request in time. Off unless
+// app.sky-help-alert-after, a recipient (app.sky-help-alert-to or app.login-alert-to) and mail.host are set.
+func initSkyHelpAlerts() {
+	a, m := global.Config.App, global.Config.Mail
+	recipients := a.SkyHelpAlertTo
+	if strings.TrimSpace(recipients) == "" {
+		recipients = a.LoginAlertTo
+	}
+	var to []string
+	for _, t := range strings.Split(recipients, ",") {
+		if t = strings.TrimSpace(t); t != "" {
+			to = append(to, t)
+		}
+	}
+	if a.SkyHelpAlertAfter <= 0 || len(to) == 0 || m.Host == "" {
+		return
+	}
+	server := utils.MailServer{Host: m.Host, Port: m.Port, User: m.User, Password: m.Password, From: m.From}
+	if server.Port == 0 {
+		server.Port = 587
+	}
+	skyapi.SkyHelpAlerts(a.SkyHelpAlertAfter, func(subject, body string) error {
+		return utils.SendMail(server, to, subject, body)
+	})
+	global.Logger.Info(fmt.Sprintf("SKY help: an email when nobody accepts within %s, to %s", a.SkyHelpAlertAfter, strings.Join(to, ", ")))
 }
 
 // initLoginAlert SKY: an email after a few wrong passwords, in place of a ban by IP (the office goes out
@@ -338,6 +367,7 @@ func Migrate(version uint) {
 		&model.AuditFile{},
 		&model.AddressBookCollection{},
 		&model.AddressBookCollectionRule{},
+		&model.SkyHelpRequest{},
 		&model.ServerCmd{},
 		&model.DeviceGroup{},
 	)

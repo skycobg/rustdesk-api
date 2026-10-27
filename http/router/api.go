@@ -73,7 +73,22 @@ func ApiInit(g *gin.Engine) {
 		frg.POST("/audit/file", au.AuditFile)
 	}
 
+	{
+		// SKY: help requests; the customer's SKY Support without a login
+		sh := &api.SkyHelp{}
+		frg.GET("/sky/help/config", sh.Config)
+		frg.POST("/sky/help", sh.Create)
+		frg.POST("/sky/help/status", sh.Status)
+		frg.POST("/sky/help/cancel", sh.Cancel)
+	}
+
 	frg.Use(middleware.RustAuth())
+	{
+		// SKY: help requests; the technicians (logged in)
+		sh := &api.SkyHelp{}
+		frg.GET("/sky/help/pending", sh.Pending)
+		frg.POST("/sky/help/accept", sh.Accept)
+	}
 	{
 		// SKY: the end-of-session note from the controlling client (logged in)
 		au := &api.Audit{}
