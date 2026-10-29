@@ -19,16 +19,19 @@ UserStatus status;
 bool isAdmin = false;
 */
 type UserPayload struct {
-	Name    string                 `json:"name"`
-	Email   string                 `json:"email"`
-	Note    string                 `json:"note"`
-	IsAdmin *bool                  `json:"is_admin"`
-	Status  int                    `json:"status"`
-	Info    map[string]interface{} `json:"info"`
+	Name string `json:"name"`
+	// SKY: the client shows display_name instead of the login name when set (the "Nickname" field in the panel).
+	DisplayName string                 `json:"display_name"`
+	Email       string                 `json:"email"`
+	Note        string                 `json:"note"`
+	IsAdmin     *bool                  `json:"is_admin"`
+	Status      int                    `json:"status"`
+	Info        map[string]interface{} `json:"info"`
 }
 
 func (up *UserPayload) FromUser(user *model.User) *UserPayload {
 	up.Name = user.Username
+	up.DisplayName = user.Nickname
 	up.Email = user.Email
 	up.IsAdmin = user.IsAdmin
 	up.Status = int(user.Status)

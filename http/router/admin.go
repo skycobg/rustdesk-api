@@ -290,6 +290,8 @@ func MyBind(rg *gin.RouterGroup) {
 		rg.POST("/my/address_book_collection/create", cont.Create)
 		rg.POST("/my/address_book_collection/update", cont.Update)
 		rg.POST("/my/address_book_collection/delete", cont.Delete)
+		rg.GET("/my/address_book_collection/personal", cont.PersonalName)
+		rg.POST("/my/address_book_collection/personal", cont.SetPersonalName)
 	}
 
 	{

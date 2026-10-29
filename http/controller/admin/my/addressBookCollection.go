@@ -8,6 +8,8 @@ import (
 	"github.com/lejianwen/rustdesk-api/v2/model"
 	"github.com/lejianwen/rustdesk-api/v2/service"
 	"gorm.io/gorm"
+	"strings"
+	"unicode/utf8"
 )
 
 type AddressBookCollection struct {
@@ -159,4 +161,36 @@ func (abc *AddressBookCollection) Delete(c *gin.Context) {
 		return
 	}
 	response.Fail(c, 101, response.TranslateMsg(c, "OperationFailed")+err.Error())
+}
+
+// SKY: "My address book" is not a row in address_book_collections (its id is 0), so its name lives on the user.
+
+type personalAbName struct {
+	Name string `json:"name"`
+}
+
+// PersonalName returns the user's name for "My address book" (empty = the default name).
+func (abc *AddressBookCollection) PersonalName(c *gin.Context) {
+	u := service.AllService.UserService.CurUser(c)
+	response.Success(c, personalAbName{Name: u.AbName})
+}
+
+// SetPersonalName renames "My address book"; an empty name brings back the default one.
+func (abc *AddressBookCollection) SetPersonalName(c *gin.Context) {
+	f := &personalAbName{}
+	if err := c.ShouldBindJSON(f); err != nil {
+		response.Fail(c, 101, response.TranslateMsg(c, "ParamsError")+err.Error())
+		return
+	}
+	name := strings.TrimSpace(f.Name)
+	if utf8.RuneCountInString(name) > 100 {
+		response.Fail(c, 101, response.TranslateMsg(c, "ParamsError"))
+		return
+	}
+	u := service.AllService.UserService.CurUser(c)
+	if err := global.DB.Model(&model.User{}).Where("id = ?", u.Id).Update("ab_name", name).Error; err != nil {
+		response.Fail(c, 101, response.TranslateMsg(c, "OperationFailed")+err.Error())
+		return
+	}
+	response.Success(c, nil)
 }

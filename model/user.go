@@ -12,6 +12,8 @@ type User struct {
 	IsAdmin  *bool      `json:"is_admin" gorm:"default:0;not null;"`
 	Status   StatusCode `json:"status" gorm:"default:1;not null;"`
 	Remark   string     `json:"remark" gorm:"default:'';not null;"`
+	// SKY: the user's own name for "My address book" (empty = the default name); the book itself cannot be deleted or shared.
+	AbName string `json:"ab_name" gorm:"default:'';not null;"`
 	TimeModel
 }
 

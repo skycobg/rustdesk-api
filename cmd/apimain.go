@@ -25,7 +25,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const DatabaseVersion = 267 // SKY: 266 notes on address-book entries and connection logs, 267 help requests
+const DatabaseVersion = 268 // SKY: 266 notes on address-book entries and connection logs, 267 help requests, 268 users.ab_name
 
 // @title 管理系统API
 // @version 1.0

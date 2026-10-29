@@ -350,6 +350,8 @@ func (a *Ab) Personal(c *gin.Context) {
 			"guid": guid,
 			"name": user.Username,
 			"rule": 3,
+			// SKY: the client shows this instead of "My address book" when set
+			"sky_name": user.AbName,
 		})
 	} else {
 		c.JSON(http.StatusOK, nil)
