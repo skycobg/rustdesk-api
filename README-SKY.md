@@ -35,4 +35,8 @@ the `sky` branch:
   RustDesk changes it as soon as it has let someone in), when the request ends, and 10 minutes after it was accepted
   at the latest.
   Settings `app.sky-help-*`: the phones, the waiting time and an email when nobody accepts in time.
+- "My address book" can be renamed by its owner (database version 268, `users.ab_name`):
+  `GET/POST /api/admin/my/address_book_collection/personal`; `/api/ab/personal` returns it as `sky_name`.
+  It still cannot be deleted or shared (it is not a row in `address_book_collections`).
+- The client gets `display_name` = the user's Nickname ("Име и фамилия" in the panel) at login and in the group list.
 - Build: `.github/workflows/sky-build.yml` (x86_64 Linux, static musl).
